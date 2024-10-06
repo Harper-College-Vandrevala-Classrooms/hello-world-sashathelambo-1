@@ -2,6 +2,8 @@
 #include <limits>
 #include <optional>
 #include <functional>
+#include <string>
+#include <sstream> 
 
 using namespace std;
 
@@ -24,10 +26,17 @@ bool input_is_valid(T value, optional<T> lower_bound, optional<T> upper_bound, f
 }
 
 template<typename T>
-T prompt(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, function<bool(T)> custom_validation = nullptr) {
+T prompt(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, optional<T> default_value, function<bool(T)> custom_validation = nullptr) {
     T value;
+    string input;
     while (true) {
-        value = prompt_and_read<T>(prompt_message);
+        cout << prompt_message << " Enter \"default\" to use the default value of " << default_value.value_or(T()) << "." << endl;
+        cin >> input;
+        if (input == "default" && default_value) {
+            return default_value.value();
+        }
+        std::stringstream ss(input);
+        ss >> value;
         if (input_is_valid(value, lower_bound, upper_bound, custom_validation)) {
             break;
         } else {
@@ -38,12 +47,13 @@ T prompt(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_
 }
 
 template<typename T>
-T get_user_input(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, function<bool(T)> custom_validation = nullptr) {
-    return prompt<T>(lower_bound, upper_bound, prompt_message, error_message, custom_validation);
+T get_user_input(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, optional<T> default_value = nullopt, function<bool(T)> custom_validation = nullptr) {
+    return prompt<T>(lower_bound, upper_bound, prompt_message, error_message, default_value, custom_validation);
 }
+
 // compiling the program: g++ -o main.exe main.cpp takes a bit of time to print in the console but it works
 int main() {
-   int value = get_user_input<int>(0, 100, "Please enter a value between 0 and 100", "Your value is invalid");
+   int value = get_user_input<int>(0, 100, "Please enter a value between 0 and 100", "Your value is invalid", 100);
    cout << "The value chosen by the user is " << value << endl;
    return 0;
 }
