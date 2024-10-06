@@ -26,14 +26,17 @@ bool input_is_valid(T value, optional<T> lower_bound, optional<T> upper_bound, f
 }
 
 template<typename T>
-T prompt(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, optional<T> default_value, function<bool(T)> custom_validation = nullptr) {
+optional<T> prompt(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, optional<T> default_value, function<bool(T)> custom_validation = nullptr) {
     T value;
     string input;
     while (true) {
-        cout << prompt_message << " Enter \"default\" to use the default value of " << default_value.value_or(T()) << "." << endl;
+        cout << prompt_message << " Enter \"default\" to use the default value of " << default_value.value_or(T()) << " or \"exit\" to abort." << endl;
         cin >> input;
         if (input == "default" && default_value) {
             return default_value.value();
+        }
+        if (input == "exit") {
+            return nullopt;
         }
         std::stringstream ss(input);
         ss >> value;
@@ -47,13 +50,47 @@ T prompt(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_
 }
 
 template<typename T>
-T get_user_input(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, optional<T> default_value = nullopt, function<bool(T)> custom_validation = nullptr) {
+optional<T> get_user_input(optional<T> lower_bound, optional<T> upper_bound, const string& prompt_message, const string& error_message, optional<T> default_value = nullopt, function<bool(T)> custom_validation = nullptr) {
     return prompt<T>(lower_bound, upper_bound, prompt_message, error_message, default_value, custom_validation);
 }
 
+// Overloaded function for string input
+optional<string> get_user_input(const string& prompt_message, const string& error_message, optional<string> default_value = nullopt) {
+    string value;
+    string input;
+    while (true) {
+        cout << prompt_message << " Enter \"default\" to use the default value of \"" << default_value.value_or("") << "\" or \"exit\" to abort." << endl;
+        cin >> input;
+        if (input == "default" && default_value) {
+            return default_value.value();
+        }
+        if (input == "exit") {
+            return nullopt;
+        }
+        if (input.length() > 0) {
+            value = input;
+            break;
+        } else {
+            cout << error_message << endl;
+        }
+    }
+    return value;
+}
 // compiling the program: g++ -o main.exe main.cpp takes a bit of time to print in the console but it works
 int main() {
-   int value = get_user_input<int>(0, 100, "Please enter a value between 0 and 100", "Your value is invalid", 100);
-   cout << "The value chosen by the user is " << value << endl;
+   optional<int> int_value = get_user_input<int>(0, 100, "Please enter a value between 0 and 100", "Your value is invalid", 100);
+   if (int_value) {
+       cout << "The value chosen by the user is " << int_value.value() << endl;
+   } else {
+       cout << "User aborted the input." << endl;
+   }
+
+   optional<string> string_value = get_user_input("Please enter a string", "Your string is invalid", "default_string");
+   if (string_value) {
+       cout << "The string chosen by the user is " << string_value.value() << endl;
+   } else {
+       cout << "User aborted the input." << endl;
+   }
+
    return 0;
 }
